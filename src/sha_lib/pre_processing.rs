@@ -1,6 +1,8 @@
 use crate::types::wrappers::{MessageBlock, PaddingType};
 
-pub fn padding(msg: &mut String, pad_config: PaddingType) -> Vec<MessageBlock> {
+use super::err_handling::ShaError;
+
+pub fn padding(msg: &mut String, pad_config: PaddingType) -> Result<Vec<MessageBlock>, ShaError> {
     let original_len = msg.len() * 8;
     let k: usize = {
         match pad_config {
@@ -61,7 +63,7 @@ pub fn padding(msg: &mut String, pad_config: PaddingType) -> Vec<MessageBlock> {
                         if subchunk.len() == 4 {
                             block[j] = u32::from_be_bytes([subchunk[0], subchunk[1], subchunk[2], subchunk[3]]);
                         } else {
-                            panic!("Invalid chunk size");
+                            Err(ShaError::CustomError("Chunck division error in padding process".to_string()))?
                         }
                     }
                     MessageBlock::Block512(block)
@@ -73,7 +75,7 @@ pub fn padding(msg: &mut String, pad_config: PaddingType) -> Vec<MessageBlock> {
                             block[j] = u64::from_be_bytes([subchunk[0], subchunk[1], subchunk[2], subchunk[3],
                                                             subchunk[4], subchunk[5], subchunk[6], subchunk[7]]);
                         } else {
-                            panic!("Invalid chunk size");
+                            Err(ShaError::CustomError("Chunck division error in padding process".to_string()))?
                         }
                     }
                     MessageBlock::Block1024(block)
@@ -81,6 +83,6 @@ pub fn padding(msg: &mut String, pad_config: PaddingType) -> Vec<MessageBlock> {
             }
         };
     };
-    result
+    Ok(result)
 }
 

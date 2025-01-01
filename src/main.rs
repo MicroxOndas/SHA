@@ -1,11 +1,11 @@
 // Code for the main function of the program
 
-mod types;
-mod sha1;
-mod sha2;
-mod constants;
-mod logical;
-mod pre_processing;
+mod sha_lib;
+
+use sha_lib::sha1;
+use sha_lib::sha2;
+use sha_lib::types;
+use sha_lib::err_handling;
 
 
 fn main() {
@@ -14,10 +14,10 @@ fn main() {
 
 
 fn menu() {
-    loop {
+    'mainLoop: loop {
         println!();
         let mut option;
-        let mut message= "".to_string();
+        let mut message;
         loop {
             println!("Welcome to Rust Hashing CLI");
             println!("1. SHA-1");
@@ -35,7 +35,8 @@ fn menu() {
                 message = get_user_input();
                 break;
             } else if option == 7 {
-                break;
+                println!("Exiting...");
+                break 'mainLoop;
             } else {
                 println!("Invalid option");
             }
@@ -62,10 +63,20 @@ fn menu() {
                 }
                 sha2::hash_message(&mut message,types::wrappers::ShaAlgorithm::SHA512T(t))
             },
-            7 => break,
-            _ => panic!("Invalid option"),
+            _ => Err(err_handling::ShaError::InvalidAlgorithm),
+        };
+        let hash = match hash {
+            Ok(h) => h,
+            Err(e) => {
+                println!("Error: {:?}",e);
+                println!("Press any key to continue");
+                get_user_input();
+                clear_console();
+                continue;
+            },
         };
         println!("Hash value:\n{:x?}",hash.get_values().iter().map(|v| format!("{:x}",v)).collect::<String>());
+        println!("Press any key to continue");
         get_user_input();
         clear_console();
     }
@@ -116,5 +127,10 @@ fn test() {
     println!("{:x?}",hash);
     let hash = sha2::hash_message(&mut string,types::wrappers::ShaAlgorithm::SHA512T(224));
     println!("{:x?}",hash);
+}
+
+#[derive(Debug)]
+pub enum MenuError {
+    InvalidOption,
 }
 

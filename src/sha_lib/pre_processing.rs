@@ -2,7 +2,7 @@ use crate::types::wrappers::{MessageBlock, PaddingType};
 
 use super::err_handling::ShaError;
 
-pub fn padding(msg: &mut String, pad_config: PaddingType) -> Result<Vec<MessageBlock>, ShaError> {
+pub fn padding(msg: &str, pad_config: PaddingType) -> Result<Vec<MessageBlock>, ShaError> {
     let original_len = msg.len() * 8;
     let k: usize = {
         match pad_config {

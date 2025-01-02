@@ -43,11 +43,11 @@ fn menu() {
         }
 
         let hash = match option {
-            1 => sha1::hash_message(&mut message,types::wrappers::ShaAlgorithm::SHA1),
-            2 => sha2::hash_message(&mut message,types::wrappers::ShaAlgorithm::SHA224),
-            3 => sha2::hash_message(&mut message,types::wrappers::ShaAlgorithm::SHA256),
-            4 => sha2::hash_message(&mut message,types::wrappers::ShaAlgorithm::SHA384),
-            5 => sha2::hash_message(&mut message,types::wrappers::ShaAlgorithm::SHA512),
+            1 => sha1::hash_message(&mut message,&types::wrappers::ShaAlgorithm::SHA1),
+            2 => sha2::hash_message(&mut message,&types::wrappers::ShaAlgorithm::SHA224),
+            3 => sha2::hash_message(&mut message,&types::wrappers::ShaAlgorithm::SHA256),
+            4 => sha2::hash_message(&mut message,&types::wrappers::ShaAlgorithm::SHA384),
+            5 => sha2::hash_message(&mut message,&types::wrappers::ShaAlgorithm::SHA512),
             6 => {
                 let mut t;
                 loop{
@@ -61,7 +61,7 @@ fn menu() {
                     }
                     
                 }
-                sha2::hash_message(&mut message,types::wrappers::ShaAlgorithm::SHA512T(t))
+                sha2::hash_message(&mut message,&types::wrappers::ShaAlgorithm::SHA512T(t))
             },
             _ => Err(err_handling::ShaError::InvalidAlgorithm),
         };
@@ -112,20 +112,20 @@ fn get_number() -> u16 {
 fn test() {
     let buf: &mut String = &mut (String::new());
     std::io::stdin().read_line(buf).expect("Unable to read line\n");
-    let mut string = buf.trim().to_string();
+    let string = buf.trim().to_owned();
     buf.clear();
 
-    let hash = sha1::hash_message(&mut string,types::wrappers::ShaAlgorithm::SHA1);
+    let hash = sha1::hash_message(& string,&types::wrappers::ShaAlgorithm::SHA1);
     println!("{:x?}",hash);
-    let hash = sha2::hash_message(&mut string,types::wrappers::ShaAlgorithm::SHA224);
+    let hash = sha2::hash_message(& string,&types::wrappers::ShaAlgorithm::SHA224);
     println!("{:x?}",hash);
-    let hash = sha2::hash_message(&mut string,types::wrappers::ShaAlgorithm::SHA256);
+    let hash = sha2::hash_message(& string,&types::wrappers::ShaAlgorithm::SHA256);
     println!("{:x?}",hash);
-    let hash = sha2::hash_message(&mut string,types::wrappers::ShaAlgorithm::SHA384);
+    let hash = sha2::hash_message(& string,&types::wrappers::ShaAlgorithm::SHA384);
     println!("{:x?}",hash);
-    let hash = sha2::hash_message(&mut string,types::wrappers::ShaAlgorithm::SHA512);
+    let hash = sha2::hash_message(& string,&types::wrappers::ShaAlgorithm::SHA512);
     println!("{:x?}",hash);
-    let hash = sha2::hash_message(&mut string,types::wrappers::ShaAlgorithm::SHA512T(224));
+    let hash = sha2::hash_message(& string,&types::wrappers::ShaAlgorithm::SHA512T(224));
     println!("{:x?}",hash);
 }
 

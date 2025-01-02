@@ -8,7 +8,7 @@ use crate::sha_lib::logic::functions::{sigma_0, sigma_1, csigma_0, csigma_1};
 use crate::sha_lib::constants::INITIAL_VALUES::{InitialValues, Constants, SHA224_INITIAL_VALUES, SHA256_INITIAL_VALUES, SHA384_INITIAL_VALUES, SHA512_INITIAL_VALUES};
 use crate::sha_lib::constants::SHA_CONSTANTS::{SHA224_K, SHA256_K, SHA384_K, SHA512_K};
 
-pub fn hash_message(msg: &mut String, algorithm: ShaAlgorithm) -> Result<HashResult,ShaError> {
+pub fn hash_message(msg: &str, algorithm: &ShaAlgorithm) -> Result<HashResult,ShaError> {
     let pad_config = match algorithm {
         ShaAlgorithm::SHA1 => return Err(ShaError::InvalidAlgorithm),
         ShaAlgorithm::SHA224 | ShaAlgorithm::SHA256=> PaddingType::S512,
@@ -22,19 +22,19 @@ pub fn hash_message(msg: &mut String, algorithm: ShaAlgorithm) -> Result<HashRes
     };
     let bin_result = match algorithm {
         ShaAlgorithm::SHA1 => Err(ShaError::InvalidAlgorithm),
-        ShaAlgorithm::SHA224 => hash(blocks, ShaAlgorithm::SHA224),
-        ShaAlgorithm::SHA256 => hash(blocks, ShaAlgorithm::SHA256),
-        ShaAlgorithm::SHA384 => hash(blocks, ShaAlgorithm::SHA384),
-        ShaAlgorithm::SHA512 => hash(blocks, ShaAlgorithm::SHA512),
+        ShaAlgorithm::SHA224 => hash(&blocks, ShaAlgorithm::SHA224),
+        ShaAlgorithm::SHA256 => hash(&blocks, ShaAlgorithm::SHA256),
+        ShaAlgorithm::SHA384 => hash(&blocks, ShaAlgorithm::SHA384),
+        ShaAlgorithm::SHA512 => hash(&blocks, ShaAlgorithm::SHA512),
         ShaAlgorithm::SHA512T(len) => {
-            hash(blocks, ShaAlgorithm::SHA512T(len))
+            hash(&blocks, ShaAlgorithm::SHA512T(len.clone()))
         }
     };
     bin_result
 }
 
 #[allow(non_snake_case)]
-pub fn hash(message_blocks: Vec<MessageBlock>, algorithm: ShaAlgorithm) -> Result<HashResult, ShaError> {
+pub fn hash(message_blocks: &Vec<MessageBlock>, algorithm: ShaAlgorithm) -> Result<HashResult, ShaError> {
     let H = obtain_initial_values(&algorithm);
     let H = match H {
         Ok(values) => values,
@@ -61,7 +61,7 @@ pub fn hash(message_blocks: Vec<MessageBlock>, algorithm: ShaAlgorithm) -> Resul
             }
         
             // Prepare the seed "SHA-512/{len}"
-            let seed = &mut format!("SHA-512/{}", t);
+            let seed = & format!("SHA-512/{}", t);
         
             // Hash the seed using SHA-512 with the modified H as the initial state
             let seed_blocks = padding(seed, PaddingType::S1024);
@@ -69,7 +69,7 @@ pub fn hash(message_blocks: Vec<MessageBlock>, algorithm: ShaAlgorithm) -> Resul
                 Ok(blocks) => blocks,
                 Err(e) => Err(e)?,
             };
-            let seed_hash = sha_2_large(seed_blocks, ShaAlgorithm::SHA512, InitialValues::Large(H),Constants::Large(SHA512_K));
+            let seed_hash = sha_2_large(&seed_blocks, ShaAlgorithm::SHA512, InitialValues::Large(H),Constants::Large(SHA512_K));
 
             // Use the result of the seed hash as the initial values for the actual message hash
             let H = match seed_hash {
@@ -129,7 +129,7 @@ fn obtain_initial_values(algorithm: &ShaAlgorithm) -> Result<InitialValues,ShaEr
                 Ok(blocks) => blocks,
                 Err(e) => Err(e)?,
             };
-            let compute = sha_2_large(blocks, ShaAlgorithm::SHA512, InitialValues::Large(H), Constants::Large(SHA512_K));
+            let compute = sha_2_large(&blocks, ShaAlgorithm::SHA512, InitialValues::Large(H), Constants::Large(SHA512_K));
             match compute {
                 Ok(HashResult::U512(result)) => {
                     let values = result.get_values();
@@ -145,7 +145,7 @@ fn obtain_initial_values(algorithm: &ShaAlgorithm) -> Result<InitialValues,ShaEr
 }
 
 #[allow(non_snake_case)]
-fn sha_2_small(message_blocks: Vec<MessageBlock>, algorithm: ShaAlgorithm, H: InitialValues, K: Constants) -> Result<HashResult,ShaError> {
+fn sha_2_small(message_blocks: &Vec<MessageBlock>, algorithm: ShaAlgorithm, H: InitialValues, K: Constants) -> Result<HashResult,ShaError> {
         
     let mut H = match H {
         InitialValues::Small(values) => values,
@@ -241,7 +241,7 @@ fn sha_2_small(message_blocks: Vec<MessageBlock>, algorithm: ShaAlgorithm, H: In
 }
 
 #[allow(non_snake_case)]
-fn sha_2_large(message_blocks: Vec<MessageBlock>, algorithm: ShaAlgorithm, H: InitialValues, K: Constants) -> Result<HashResult,ShaError> {
+fn sha_2_large(message_blocks: &Vec<MessageBlock>, algorithm: ShaAlgorithm, H: InitialValues, K: Constants) -> Result<HashResult,ShaError> {
 
     let mut H = match H {
         InitialValues::Small(_) => Err(ShaError::InvalidInitialValues)?,

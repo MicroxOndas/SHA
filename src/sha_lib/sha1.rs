@@ -10,7 +10,7 @@ use crate::sha_lib::constants::INITIAL_VALUES::SHA1_INITIAL_VALUES;
 use crate::sha_lib::constants::SHA_CONSTANTS::SHA1_K;
 
 
-pub fn hash_message(msg: &mut String, algorithm: ShaAlgorithm) -> Result<HashResult,ShaError> {
+pub fn hash_message(msg: &str, algorithm: &ShaAlgorithm) -> Result<HashResult,ShaError> {
     let pad_config = match algorithm {
         ShaAlgorithm::SHA1 => PaddingType::S512,
         _ => return Err(ShaError::InvalidAlgorithm),
@@ -21,14 +21,14 @@ pub fn hash_message(msg: &mut String, algorithm: ShaAlgorithm) -> Result<HashRes
         Err(e) => return Err(e),
     };
     let bin_result = match algorithm {
-        ShaAlgorithm::SHA1 => hash(blocks),
+        ShaAlgorithm::SHA1 => hash(&blocks),
         _ => return Err(ShaError::InvalidAlgorithm),
     };
     bin_result
 }
 
 #[allow(dead_code)]
-pub fn hash(message_blocks: Vec<MessageBlock>) -> Result<HashResult, ShaError> {
+pub fn hash(message_blocks: &Vec<MessageBlock>) -> Result<HashResult, ShaError> {
     let result = sha_1(message_blocks);
     match result {
         Ok(hash) => Ok(hash),
@@ -37,7 +37,7 @@ pub fn hash(message_blocks: Vec<MessageBlock>) -> Result<HashResult, ShaError> {
 }
 
 #[allow(non_snake_case)]
-fn sha_1(message_blocks: Vec<MessageBlock>) -> Result<HashResult, ShaError> {
+fn sha_1(message_blocks: &Vec<MessageBlock>) -> Result<HashResult, ShaError> {
     let mut H: [u32; 5] = SHA1_INITIAL_VALUES;
     for  block in message_blocks.iter() {
         //Prepare the schedule

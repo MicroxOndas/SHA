@@ -15,11 +15,7 @@ pub fn hash_message(msg: &str, algorithm: &ShaAlgorithm) -> Result<HashResult,Sh
         ShaAlgorithm::SHA384 | ShaAlgorithm::SHA512 => PaddingType::S1024,
         ShaAlgorithm::SHA512T(_) => PaddingType::S1024,
     };
-    let blocks = padding(msg, pad_config);
-    let blocks = match blocks {
-        Ok(blocks) => blocks,
-        Err(e) => return Err(e),
-    };
+    let blocks = padding(msg, pad_config)?;
     let bin_result = match algorithm {
         ShaAlgorithm::SHA1 => Err(ShaError::InvalidAlgorithm),
         ShaAlgorithm::SHA224 => hash(&blocks, ShaAlgorithm::SHA224),
@@ -35,17 +31,8 @@ pub fn hash_message(msg: &str, algorithm: &ShaAlgorithm) -> Result<HashResult,Sh
 
 #[allow(non_snake_case)]
 pub fn hash(message_blocks: &Vec<MessageBlock>, algorithm: ShaAlgorithm) -> Result<HashResult, ShaError> {
-    let H = obtain_initial_values(&algorithm);
-    let H = match H {
-        Ok(values) => values,
-        Err(e) => return Err(e),
-    };
-    let K = obtain_constants(&algorithm);
-    let K = match K {
-        Ok(values) => values,
-        Err(e) => return Err(e),
-    };
-
+    let H = obtain_initial_values(&algorithm)?;
+    let K = obtain_constants(&algorithm)?;
     match algorithm {
         ShaAlgorithm::SHA224 | ShaAlgorithm::SHA256 => sha_2_small(message_blocks, algorithm, H, K),
         ShaAlgorithm::SHA384 | ShaAlgorithm::SHA512 => sha_2_large(message_blocks, algorithm, H, K),
@@ -105,7 +92,7 @@ fn obtain_constants(algorithm: &ShaAlgorithm) -> Result<Constants,ShaError> {
         ShaAlgorithm::SHA384 => Constants::Large(SHA384_K),
         ShaAlgorithm::SHA512 => Constants::Large(SHA512_K),
         ShaAlgorithm::SHA512T(_) => Constants::Large(SHA512_K),
-        _ => Err(ShaError::InvalidAlgorithm)?,
+        _ => return Err(ShaError::InvalidAlgorithm),
     };
     Ok(constants)
 }
@@ -153,7 +140,7 @@ fn sha_2_small(message_blocks: &Vec<MessageBlock>, algorithm: ShaAlgorithm, H: I
     };
     let K  = match K {
         Constants::Small(values) => values,
-        Constants::Large(_) => Err(ShaError::InvalidConstants)?,
+        Constants::Large(_) => return Err(ShaError::InvalidConstants),
     };
         
         // Iterate over the message blocks until n-block
@@ -166,14 +153,8 @@ fn sha_2_small(message_blocks: &Vec<MessageBlock>, algorithm: ShaAlgorithm, H: I
                 schedule[t] = block[t];
                 }
                 for t in 16..64 {
-                    let sig_1 = match sigma_1(schedule[t-2]){
-                        Ok(value) => value,
-                        Err(e) => return Err(e),
-                    };
-                    let sig_0 = match sigma_0(schedule[t-15]){
-                        Ok(value) => value,
-                        Err(e) => return Err(e),
-                    };
+                    let sig_1 = sigma_1(schedule[t-2])?;
+                    let sig_0 = sigma_0(schedule[t-15])?;
                     schedule[t] = {
                         sig_1
                             .wrapping_add(schedule[t-7])
@@ -194,14 +175,8 @@ fn sha_2_small(message_blocks: &Vec<MessageBlock>, algorithm: ShaAlgorithm, H: I
     
                 //Variables rotation with compresion function
                 for t in 0..64 {
-                    let sig_1 = match csigma_1(e){
-                        Ok(value) => value,
-                        Err(e) => return Err(e),
-                    };
-                    let sig_0 = match csigma_0(a){
-                        Ok(value) => value,
-                        Err(e) => return Err(e),
-                    };
+                    let sig_1 = csigma_1(e)?;
+                    let sig_0 = csigma_0(a)?;
                     let temp_1: u32 = h
                         .wrapping_add(sig_1)
                         .wrapping_add(ch(e, f, g))
@@ -263,14 +238,8 @@ fn sha_2_large(message_blocks: &Vec<MessageBlock>, algorithm: ShaAlgorithm, H: I
                 }
                 for t in 16..80 {
                     schedule[t] = {
-                        let sig_1 = match sigma_1(schedule[t-2]){
-                            Ok(value) => value,
-                            Err(e) => return Err(e),
-                        };
-                        let sig_0 = match sigma_0(schedule[t-15]){
-                            Ok(value) => value,
-                            Err(e) => return Err(e),
-                        };
+                        let sig_1 = sigma_1(schedule[t-2])?;
+                        let sig_0 = sigma_0(schedule[t-15])?;
                         sig_1
                             .wrapping_add(schedule[t-7])
                             .wrapping_add(sig_0)
@@ -290,14 +259,8 @@ fn sha_2_large(message_blocks: &Vec<MessageBlock>, algorithm: ShaAlgorithm, H: I
     
                 //Variables rotation with compresion function
                 for t in 0..80 {
-                    let sig_1 = match csigma_1(e){
-                        Ok(value) => value,
-                        Err(e) => return Err(e),
-                    };
-                    let sig_0 = match csigma_0(a){
-                        Ok(value) => value,
-                        Err(e) => return Err(e),
-                    };
+                    let sig_1 = csigma_1(e)?;
+                    let sig_0 = csigma_0(a)?;
                     let temp_1: u64 = h
                         .wrapping_add(sig_1)
                         .wrapping_add(ch(e, f, g))

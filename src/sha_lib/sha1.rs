@@ -15,11 +15,7 @@ pub fn hash_message(msg: &str, algorithm: &ShaAlgorithm) -> Result<HashResult,Sh
         ShaAlgorithm::SHA1 => PaddingType::S512,
         _ => return Err(ShaError::InvalidAlgorithm),
     };
-    let blocks = padding(msg, pad_config);
-    let blocks = match blocks {
-        Ok(blocks) => blocks,
-        Err(e) => return Err(e),
-    };
+    let blocks = padding(msg, pad_config)?;
     let bin_result = match algorithm {
         ShaAlgorithm::SHA1 => hash(&blocks),
         _ => return Err(ShaError::InvalidAlgorithm),
@@ -29,11 +25,7 @@ pub fn hash_message(msg: &str, algorithm: &ShaAlgorithm) -> Result<HashResult,Sh
 
 #[allow(dead_code)]
 pub fn hash(message_blocks: &Vec<MessageBlock>) -> Result<HashResult, ShaError> {
-    let result = sha_1(message_blocks);
-    match result {
-        Ok(hash) => Ok(hash),
-        Err(e) => Err(e),
-    }
+    Ok(sha_1(message_blocks)?)
 }
 
 #[allow(non_snake_case)]
@@ -67,15 +59,9 @@ fn sha_1(message_blocks: &Vec<MessageBlock>) -> Result<HashResult, ShaError> {
             let mut e = H[4];
             for t in 0..80 {
                 let temp: u32 = rot_l(a, 5)
-                    .wrapping_add(match f(t, b, c, d){
-                        Ok(val) => val,
-                        Err(e) => Err(e)?,
-                    })
+                    .wrapping_add(f(t, b, c, d)?)
                     .wrapping_add(e)
-                    .wrapping_add(match k(t) {
-                        Ok(val) => val,
-                        Err(e) => Err(e)?,
-                    })
+                    .wrapping_add(k(t)?)
                     .wrapping_add(schedule[t as usize]);
                 e = d;
                 d = c;
